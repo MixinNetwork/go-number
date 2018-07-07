@@ -59,4 +59,8 @@ func TestDecimal(t *testing.T) {
 	i := FromString("465.505437")
 	assert.Equal("465.50543", i.RoundFloor(5).Persist())
 	assert.Equal("465.505437", i.RoundFloor(8).Persist())
+
+	j := FromString("0.00000000999")
+	assert.Equal("0", j.RoundFloor(8).Persist())
+	assert.True(j.Exhausted())
 }
