@@ -105,5 +105,5 @@ func (a Decimal) Float64() float64 {
 }
 
 func (a Decimal) Exhausted() bool {
-	return a.Decimal.Round(presentDecimals).LessThan(presentMin)
+	return a.RoundFloor(presentDecimals).LessThan(presentMin)
 }
