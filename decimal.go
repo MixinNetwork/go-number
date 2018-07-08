@@ -1,6 +1,8 @@
 package number
 
 import (
+	"fmt"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -29,6 +31,10 @@ func New(value int64, decimals int32) Decimal {
 func FromString(source string) Decimal {
 	d, _ := decimal.NewFromString(source)
 	return Decimal{d.Round(persistentDecimals)}
+}
+
+func FromInt(source int64) Decimal {
+	return FromString(fmt.Sprint(source))
 }
 
 func (a Decimal) Add(b Decimal) Decimal {
