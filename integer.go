@@ -19,6 +19,10 @@ func (i Integer) Precision() uint8 {
 	return i.decimals
 }
 
+func (i Integer) Zero() Integer {
+	return Integer{0, i.decimals}
+}
+
 func (i Integer) Decimal() Decimal {
 	return NewDecimal(i.value, int32(i.decimals))
 }
