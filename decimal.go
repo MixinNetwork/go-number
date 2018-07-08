@@ -1,8 +1,6 @@
 package number
 
 import (
-	"fmt"
-
 	"github.com/shopspring/decimal"
 )
 
@@ -11,20 +9,15 @@ const (
 	persistentDecimals = 32
 )
 
-var (
-	zero       = New(0, 0)
-	presentMin = New(1, presentDecimals).Decimal.Round(presentDecimals)
-)
-
 type Decimal struct {
 	decimal.Decimal
 }
 
 func Zero() Decimal {
-	return zero
+	return Decimal{}
 }
 
-func New(value int64, decimals int32) Decimal {
+func NewDecimal(value int64, decimals int32) Decimal {
 	return Decimal{decimal.New(value, -decimals).Round(persistentDecimals)}
 }
 
@@ -33,8 +26,8 @@ func FromString(source string) Decimal {
 	return Decimal{d.Round(persistentDecimals)}
 }
 
-func FromInt(source int64) Decimal {
-	return FromString(fmt.Sprint(source))
+func (d Decimal) Integer(precision uint8) Integer {
+	return Integer{d.Mul(NewDecimal(1, -int32(precision))).IntPart(), precision}
 }
 
 func (a Decimal) Add(b Decimal) Decimal {
@@ -82,11 +75,11 @@ func (a Decimal) Round(decimals int32) Decimal {
 }
 
 func (a Decimal) RoundFloor(decimals int32) Decimal {
-	return a.Mul(New(1, -decimals)).Floor().Mul(New(1, decimals))
+	return a.Mul(NewDecimal(1, -decimals)).Floor().Mul(NewDecimal(1, decimals))
 }
 
 func (a Decimal) RoundCeil(decimals int32) Decimal {
-	return a.Mul(New(1, -decimals)).Ceil().Mul(New(1, decimals))
+	return a.Mul(NewDecimal(1, -decimals)).Ceil().Mul(NewDecimal(1, decimals))
 }
 
 func (a Decimal) Equal(b Decimal) bool {
@@ -111,5 +104,6 @@ func (a Decimal) Float64() float64 {
 }
 
 func (a Decimal) Exhausted() bool {
+	presentMin := NewDecimal(1, presentDecimals).Decimal.Round(presentDecimals)
 	return a.RoundFloor(presentDecimals).LessThan(presentMin)
 }

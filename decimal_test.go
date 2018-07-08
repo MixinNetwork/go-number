@@ -22,12 +22,12 @@ func TestDecimal(t *testing.T) {
 	assert.Equal("1", b.PresentFloor())
 	assert.Equal("1.00000001", b.PresentCeil())
 
-	c := New(1e8, 7)
+	c := NewDecimal(1e8, 7)
 	assert.Equal("10", c.Persist())
 	assert.Equal("10", c.PresentFloor())
 	assert.Equal("10", c.PresentCeil())
 
-	d := New(1, 15)
+	d := NewDecimal(1, 15)
 	assert.Equal("0.000000000000001", d.Persist())
 	assert.Equal(1, d.Cmp(Zero()))
 	assert.True(d.Exhausted())
@@ -41,13 +41,13 @@ func TestDecimal(t *testing.T) {
 	e, _ := new(big.Int).SetString("0x32748932FA632BFF8323282", 0)
 	assert.Equal("975945861920638759748121218", e.Text(10))
 
-	f := FromString(e.Text(10)).Mul(New(1, 18))
+	f := FromString(e.Text(10)).Mul(NewDecimal(1, 18))
 	assert.Equal("975945861.920638759748121218", f.Persist())
 	assert.Equal("975945861.92063875", f.PresentFloor())
 	assert.Equal("975945861.92063876", f.PresentCeil())
 	assert.False(f.Exhausted())
 
-	g := New(1e10, 0)
+	g := NewDecimal(1e10, 0)
 	assert.Equal("10000000000", g.Persist())
 
 	h := FromString(e.Text(10)).Div(FromString("1000000000000000000"))
