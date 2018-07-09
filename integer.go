@@ -1,6 +1,8 @@
 package number
 
-import "log"
+import (
+	"log"
+)
 
 type Integer struct {
 	value    int64
@@ -29,6 +31,10 @@ func (i Integer) Decimal() Decimal {
 
 func (i Integer) Persist() string {
 	return i.Decimal().Persist()
+}
+
+func (i Integer) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + i.Persist() + "\""), nil
 }
 
 func (a Integer) safeAdd(b Integer) (Integer, bool) {
