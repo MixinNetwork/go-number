@@ -26,6 +26,10 @@ func FromString(source string) Decimal {
 	return Decimal{d.Round(persistentDecimals)}
 }
 
+func FromFloat(source float64) Decimal {
+	return Decimal{decimal.NewFromFloat(source).Round(persistentDecimals)}
+}
+
 func (d Decimal) Integer(precision uint8) Integer {
 	return Integer{d.Mul(NewDecimal(1, -int32(precision))).IntPart(), precision}
 }
