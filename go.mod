@@ -1,6 +1,6 @@
 module github.com/MixinNetwork/go-number
 
-go 1.16
+go 1.15
 
 require (
 	github.com/shopspring/decimal v1.2.1-0.20210329231237-501661573f60
