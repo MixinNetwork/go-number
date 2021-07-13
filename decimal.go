@@ -31,7 +31,7 @@ func FromFloat(source float64) Decimal {
 }
 
 func (d Decimal) Integer(precision uint8) Integer {
-	return Integer{d.Mul(NewDecimal(1, -int32(precision))).IntPart(), precision}
+	return NewIntegerFromString(d.Mul(NewDecimal(1, -int32(precision))).Persist())
 }
 
 func (a Decimal) Add(b Decimal) Decimal {

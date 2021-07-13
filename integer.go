@@ -1,156 +1,164 @@
 package number
 
 import (
-	"log"
+	"fmt"
+	"math"
+	"math/big"
+	"strconv"
+	"strings"
+
+	"github.com/shopspring/decimal"
 )
 
+const Precision = 8
+
+var ZeroInteger Integer
+
+func init() {
+	ZeroInteger = NewInteger(0)
+}
+
 type Integer struct {
-	value    int64
-	decimals uint8
+	i big.Int
 }
 
-func NewInteger(value int64, decimals uint8) Integer {
-	return Integer{value, decimals}
-}
-
-func (i Integer) Value() int64 {
-	return i.value
-}
-
-func (i Integer) Precision() uint8 {
-	return i.decimals
-}
-
-func (i Integer) Zero() Integer {
-	return Integer{0, i.decimals}
-}
-
-func (i Integer) Decimal() Decimal {
-	return NewDecimal(i.value, int32(i.decimals))
-}
-
-func (i Integer) Persist() string {
-	return i.Decimal().Persist()
-}
-
-func (i Integer) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + i.Persist() + "\""), nil
-}
-
-func (a Integer) safeAdd(b Integer) (Integer, bool) {
-	i := Integer{
-		value:    a.value + b.value,
-		decimals: a.decimals,
+func NewIntegerFromString(x string) (v Integer) {
+	d, err := decimal.NewFromString(x)
+	if err != nil {
+		panic(err)
 	}
-	if a.decimals != b.decimals {
-		return i, false
+	if d.Sign() <= 0 {
+		panic(x)
 	}
-	if i.value < a.value || i.value < b.value {
-		return i, false
-	}
-	return i, true
+	s := d.Mul(decimal.New(1, Precision)).StringFixed(0)
+	v.i.SetString(s, 10)
+	return
 }
 
-func (a Integer) safeSub(b Integer) (Integer, bool) {
-	i := Integer{
-		value:    a.value - b.value,
-		decimals: a.decimals,
-	}
-	if a.decimals != b.decimals {
-		return i, false
-	}
-	if b.value > a.value {
-		return i, false
-	}
-	return i, true
+func NewInteger(x uint64) (v Integer) {
+	p := new(big.Int).SetUint64(x)
+	d := big.NewInt(int64(math.Pow(10, Precision)))
+	v.i.Mul(p, d)
+	return
 }
 
-func (a Integer) safeMul(b Integer) (Integer, bool) {
-	i := Integer{
-		value:    a.value * b.value,
-		decimals: a.decimals + b.decimals,
+func (x Integer) Add(y Integer) (v Integer) {
+	if x.Sign() < 0 || y.Sign() <= 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	if i.decimals < a.decimals || i.decimals < b.decimals {
-		return i, false
+
+	v.i.Add(&x.i, &y.i)
+	if v.Cmp(x) < 0 || v.Cmp(y) < 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	if a.value != 0 && i.value/a.value != b.value {
-		return i, false
-	}
-	return i, true
+	return
 }
 
-func (a Integer) safeDiv(b Integer) (Integer, bool) {
-	i := Integer{
-		value:    a.value / b.value,
-		decimals: a.decimals - b.decimals,
+func (x Integer) Sub(y Integer) (v Integer) {
+	if x.Sign() < 0 || y.Sign() <= 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	if a.decimals < b.decimals {
-		return i, false
+	if x.Cmp(y) < 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	return i, true
+
+	v.i.Sub(&x.i, &y.i)
+	return
 }
 
-func (a Integer) safeCmp(b Integer) (int, bool) {
-	if a.decimals != b.decimals {
-		return 0, false
+func (x Integer) MulInt(y int) (v Integer) {
+	if x.Sign() < 0 || y <= 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	if a.value > b.value {
-		return 1, true
-	}
-	if a.value < b.value {
-		return -1, true
-	}
-	return 0, true
+
+	v.i.Mul(&x.i, big.NewInt(int64(y)))
+	return
 }
 
-func (a Integer) Add(b Integer) Integer {
-	i, ok := a.safeAdd(b)
-	if !ok {
-		log.Panicln(a, b)
+func (x Integer) DivInt(y int) (v Integer) {
+	if x.Sign() < 0 || y <= 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	return i
+
+	v.i.Div(&x.i, big.NewInt(int64(y)))
+	return
 }
 
-func (a Integer) Sub(b Integer) Integer {
-	i, ok := a.safeSub(b)
-	if !ok {
-		log.Panicln(a, b)
+func (x Integer) Mul(y Integer) (v Integer) {
+	if x.Sign() < 0 || y.Sign() <= 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	return i
+
+	v.i.Mul(&x.i, &y.i)
+	return
 }
 
-func (a Integer) Mul(b Integer) Integer {
-	i, ok := a.safeMul(b)
-	if !ok {
-		log.Panicln(a, b)
+func (x Integer) Div(y Integer) (v Integer) {
+	if x.Sign() < 0 || y.Sign() <= 0 {
+		panic(fmt.Sprint(x, y))
 	}
-	return i
+
+	v.i.Div(&x.i, &y.i)
+	return
 }
 
-func (a Integer) Div(b Integer) Integer {
-	i, ok := a.safeDiv(b)
-	if !ok {
-		log.Panicln(a, b)
+func (x Integer) Cmp(y Integer) int {
+	return x.i.Cmp(&y.i)
+}
+
+func (x Integer) Sign() int {
+	return x.i.Sign()
+}
+
+func (x Integer) IsZero() bool {
+	return x.Cmp(ZeroInteger) == 0
+}
+
+func (x Integer) Value() int64 {
+	return x.i.Int64()
+}
+
+func (x Integer) Decimal() Decimal {
+	return FromString(x.String())
+}
+
+func (x Integer) Zero() Integer {
+	return ZeroInteger
+}
+
+func (x Integer) Persist() string {
+	return x.String()
+}
+
+func (x Integer) String() string {
+	s := x.i.String()
+	p := len(s) - Precision
+	if p > 0 {
+		return s[:p] + "." + s[p:]
 	}
-	return i
+	return "0." + strings.Repeat("0", -p) + s
 }
 
-func (a Integer) Cmp(b Integer) int {
-	i, ok := a.safeCmp(b)
-	if !ok {
-		log.Panicln(a, b)
+func (x Integer) MarshalMsgpack() ([]byte, error) {
+	return x.i.Bytes(), nil
+}
+
+func (x *Integer) UnmarshalMsgpack(data []byte) error {
+	x.i.SetBytes(data)
+	return nil
+}
+
+func (x Integer) MarshalJSON() ([]byte, error) {
+	s := x.String()
+	return []byte(strconv.Quote(s)), nil
+}
+
+func (x *Integer) UnmarshalJSON(b []byte) error {
+	unquoted, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
 	}
-	return i
-}
-
-func (a Integer) IsZero() bool {
-	return a.value == 0
-}
-
-func (a Integer) IsPositive() bool {
-	return a.value > 0
-}
-
-func (a Integer) IsNegative() bool {
-	return a.value < 0
+	i := NewIntegerFromString(unquoted)
+	x.i.SetBytes(i.i.Bytes())
+	return nil
 }
