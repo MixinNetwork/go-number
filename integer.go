@@ -115,7 +115,7 @@ func (x Integer) IsZero() bool {
 }
 
 func (x Integer) Value() int64 {
-	return x.i.Int64()
+	return x.Decimal().IntPart()
 }
 
 func (x Integer) Decimal() Decimal {
