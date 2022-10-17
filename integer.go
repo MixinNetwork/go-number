@@ -2,19 +2,23 @@ package number
 
 import (
 	"log"
+	"math/big"
 )
 
 type Integer struct {
-	value    int64
+	value    *big.Int
 	decimals uint8
 }
 
 func NewInteger(value int64, decimals uint8) Integer {
-	return Integer{value, decimals}
+	return Integer{big.NewInt(value), decimals}
 }
 
 func (i Integer) Value() int64 {
-	return i.value
+	if !i.value.IsInt64() {
+		panic(i.value.String())
+	}
+	return i.value.Int64()
 }
 
 func (i Integer) Precision() uint8 {
@@ -22,11 +26,11 @@ func (i Integer) Precision() uint8 {
 }
 
 func (i Integer) Zero() Integer {
-	return Integer{0, i.decimals}
+	return Integer{new(big.Int), i.decimals}
 }
 
 func (i Integer) Decimal() Decimal {
-	return NewDecimal(i.value, int32(i.decimals))
+	return FromString(i.value.String()).Mul(NewDecimal(1, int32(i.decimals)))
 }
 
 func (i Integer) Persist() string {
@@ -39,13 +43,13 @@ func (i Integer) MarshalJSON() ([]byte, error) {
 
 func (a Integer) safeAdd(b Integer) (Integer, bool) {
 	i := Integer{
-		value:    a.value + b.value,
+		value:    new(big.Int).Add(a.value, b.value),
 		decimals: a.decimals,
 	}
 	if a.decimals != b.decimals {
 		return i, false
 	}
-	if i.value < a.value || i.value < b.value {
+	if i.value.Cmp(a.value) < 0 || i.value.Cmp(b.value) < 0 {
 		return i, false
 	}
 	return i, true
@@ -53,13 +57,13 @@ func (a Integer) safeAdd(b Integer) (Integer, bool) {
 
 func (a Integer) safeSub(b Integer) (Integer, bool) {
 	i := Integer{
-		value:    a.value - b.value,
+		value:    new(big.Int).Sub(a.value, b.value),
 		decimals: a.decimals,
 	}
 	if a.decimals != b.decimals {
 		return i, false
 	}
-	if b.value > a.value {
+	if b.value.Cmp(a.value) > 0 {
 		return i, false
 	}
 	return i, true
@@ -67,13 +71,13 @@ func (a Integer) safeSub(b Integer) (Integer, bool) {
 
 func (a Integer) safeMul(b Integer) (Integer, bool) {
 	i := Integer{
-		value:    a.value * b.value,
+		value:    new(big.Int).Mul(a.value, b.value),
 		decimals: a.decimals + b.decimals,
 	}
 	if i.decimals < a.decimals || i.decimals < b.decimals {
 		return i, false
 	}
-	if a.value != 0 && i.value/a.value != b.value {
+	if a.value.Sign() != 0 && new(big.Int).Div(i.value, a.value).Cmp(b.value) != 0 {
 		return i, false
 	}
 	return i, true
@@ -81,7 +85,7 @@ func (a Integer) safeMul(b Integer) (Integer, bool) {
 
 func (a Integer) safeDiv(b Integer) (Integer, bool) {
 	i := Integer{
-		value:    a.value / b.value,
+		value:    new(big.Int).Div(a.value, b.value),
 		decimals: a.decimals - b.decimals,
 	}
 	if a.decimals < b.decimals {
@@ -94,10 +98,10 @@ func (a Integer) safeCmp(b Integer) (int, bool) {
 	if a.decimals != b.decimals {
 		return 0, false
 	}
-	if a.value > b.value {
+	if a.value.Cmp(b.value) > 0 {
 		return 1, true
 	}
-	if a.value < b.value {
+	if a.value.Cmp(b.value) < 0 {
 		return -1, true
 	}
 	return 0, true
@@ -144,13 +148,13 @@ func (a Integer) Cmp(b Integer) int {
 }
 
 func (a Integer) IsZero() bool {
-	return a.value == 0
+	return a.value.Sign() == 0
 }
 
 func (a Integer) IsPositive() bool {
-	return a.value > 0
+	return a.value.Sign() > 0
 }
 
 func (a Integer) IsNegative() bool {
-	return a.value < 0
+	return a.value.Sign() < 0
 }
