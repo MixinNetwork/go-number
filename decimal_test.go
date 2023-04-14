@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -63,4 +64,6 @@ func TestDecimal(t *testing.T) {
 	j := FromString("0.00000000999")
 	assert.Equal("0", j.RoundFloor(8).Persist())
 	assert.True(j.Exhausted())
+	source := j.Source()
+	assert.IsType(new(decimal.Decimal), &source)
 }

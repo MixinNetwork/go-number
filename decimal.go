@@ -111,3 +111,7 @@ func (a Decimal) Exhausted() bool {
 	presentMin := NewDecimal(1, presentDecimals).Decimal.Round(presentDecimals)
 	return a.RoundFloor(presentDecimals).LessThan(presentMin)
 }
+
+func (a Decimal) Source() decimal.Decimal {
+	return a.Decimal
+}
