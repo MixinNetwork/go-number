@@ -1,10 +1,10 @@
 module github.com/MixinNetwork/go-number
 
-go 1.23.0
+go 1.24.5
 
 require (
 	github.com/shopspring/decimal v1.4.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 )
 
 require (

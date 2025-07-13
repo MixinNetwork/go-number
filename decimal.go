@@ -22,7 +22,7 @@ func NewDecimal(value int64, decimals int32) Decimal {
 }
 
 func FromString(source string) Decimal {
-	d, _ := decimal.NewFromString(source)
+	d := decimal.RequireFromString(source)
 	return Decimal{d.Round(persistentDecimals)}
 }
 
