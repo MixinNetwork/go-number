@@ -1,6 +1,8 @@
 package number
 
 import (
+	"strings"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -19,6 +21,14 @@ func Zero() Decimal {
 
 func NewDecimal(value int64, decimals int32) Decimal {
 	return Decimal{decimal.New(value, -decimals).Round(persistentDecimals)}
+}
+
+func SafeFromString(source string) Decimal {
+	source = strings.TrimSpace(source)
+	if source == "" {
+		return Zero()
+	}
+	return FromString(source)
 }
 
 func FromString(source string) Decimal {
