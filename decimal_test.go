@@ -66,4 +66,8 @@ func TestDecimal(t *testing.T) {
 	assert.True(j.Exhausted())
 	source := j.Source()
 	assert.IsType(new(decimal.Decimal), &source)
+
+	k := SafeFromString(" ")
+	assert.Equal("0", k.RoundFloor(8).Persist())
+	assert.True(k.Exhausted())
 }
